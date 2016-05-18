@@ -78,7 +78,6 @@ SPIHubClient.prototype._onIPCMessage = function(event) {
       case IPC_MSG_DEVICES_LIST:
         const strDevicesList = message.toString('utf8', 2)
         const devicesList = JSON.parse(strDevicesList)
-        console.log('got devices list:', devicesList)
         this.emit('devicesChanged', devicesList)
         break;
       case IPC_MSG_MESSAGE_FROM_DEVICE:
