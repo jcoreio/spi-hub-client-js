@@ -15,4 +15,4 @@ spi.on('message', message => {
   console.log('got SPI message', message)
 })
 
-setTimeout(() => spi.send({ bus: 0, device: 0, channel: 4, data: 'hello SPI' }), 1000)
+setTimeout(() => spi.send({ bus: 0, device: 0, channel: 4, message: 'hello SPI' }), 1000)
