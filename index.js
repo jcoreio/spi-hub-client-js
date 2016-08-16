@@ -1,27 +1,27 @@
 
 'use strict'
 
-const assert = require('assert')
-const util = require('util')
-const EventEmitter = require('events').EventEmitter
+var assert = require('assert')
+var util = require('util')
+var EventEmitter = require('events').EventEmitter
 
-const _ = require('lodash')
-const ipc = require('socket-ipc')
+var _ = require('lodash')
+var ipc = require('socket-ipc')
 
-const SPI_HUB_SOCKET_PATH = '/tmp/socket-spi-hub'
+var SPI_HUB_SOCKET_PATH = '/tmp/socket-spi-hub'
 
-const IPC_PROTO_VERSION = 1
+var IPC_PROTO_VERSION = 1
 
 // Commands that are valid both on the SPI bus and on the IPC socket
-const SPI_HUB_CMD_MSG_TO_DEVICE   = 1
-const SPI_HUB_CMD_MSG_FROM_DEVICE = 2
+var SPI_HUB_CMD_MSG_TO_DEVICE   = 1
+var SPI_HUB_CMD_MSG_FROM_DEVICE = 2
 // Commands that are only valid on the IPC socket
-const SPI_HUB_CMD_DEVICES_LIST    = 100
+var SPI_HUB_CMD_DEVICES_LIST    = 100
 
-const IPC_DEVICE_MESSAGE_OVERHEAD = 7
+var IPC_DEVICE_MESSAGE_OVERHEAD = 7
 
-const nodeVersion = process.version.split('.');
-const isNode6 = nodeVersion.length >= 3 && nodeVersion[0] >= 6;
+var nodeVersion = process.version.split('.');
+var isNode6 = nodeVersion.length >= 3 && nodeVersion[0] >= 6;
 
 module.exports = SPIHubClient
 
@@ -39,11 +39,11 @@ util.inherits(SPIHubClient, EventEmitter)
 
 SPIHubClient.prototype.send = function send(opts) {
   if(opts == undefined) throw new Error('message must be provided')
-  let bus = 0
-  let device = 0
-  let channel = 0
-  let msgDeDupeId = 0
-  let message = undefined
+  var bus = 0
+  var device = 0
+  var channel = 0
+  var msgDeDupeId = 0
+  var message = undefined
   if(_.isObject(opts)) {
     bus         = validateUInt8(opts.bus,          'bus')
     device      = validateUInt8(opts.device,       'device')
@@ -53,7 +53,7 @@ SPIHubClient.prototype.send = function send(opts) {
   } else {
     message = opts
   }
-  let msgPayloadBuffer = undefined
+  var msgPayloadBuffer = undefined
   if(_.isString(message)) {
     msgPayloadBuffer = stringToBuffer(message)
   } else if(_.isBuffer(message)) {
@@ -62,8 +62,8 @@ SPIHubClient.prototype.send = function send(opts) {
     throw new Error('message data must be either a string or a Buffer')
   }
 
-  const ipcMsgBuf = allocBuffer(msgPayloadBuffer.length + IPC_DEVICE_MESSAGE_OVERHEAD)
-  let pos = 0
+  var ipcMsgBuf = allocBuffer(msgPayloadBuffer.length + IPC_DEVICE_MESSAGE_OVERHEAD)
+  var pos = 0
   ipcMsgBuf.writeUInt8(IPC_PROTO_VERSION, pos++)
   ipcMsgBuf.writeUInt8(SPI_HUB_CMD_MSG_TO_DEVICE, pos++)
   ipcMsgBuf.writeUInt8(bus, pos++)
@@ -76,39 +76,39 @@ SPIHubClient.prototype.send = function send(opts) {
 }
 
 SPIHubClient.prototype._onIPCMessage = function(event) {
-  const ipcMsgBuf = event.data;
+  var ipcMsgBuf = event.data;
   try {
     assert(ipcMsgBuf.length > 2, 'ipc message is too short')
-    let pos = 0
-    const version = ipcMsgBuf.readUInt8(pos++)
-    const cmd = ipcMsgBuf.readUInt8(pos++)
-    assert(version === IPC_PROTO_VERSION, `unexpected protocol version: ${version}`)
+    var pos = 0
+    var version = ipcMsgBuf.readUInt8(pos++)
+    var cmd = ipcMsgBuf.readUInt8(pos++)
+    assert(version === IPC_PROTO_VERSION, 'unexpected protocol version: ' + version)
     switch(cmd) {
       case SPI_HUB_CMD_DEVICES_LIST:
-        const strDevicesList = ipcMsgBuf.toString('utf8', pos)
-        const devicesList = JSON.parse(strDevicesList)
+        var strDevicesList = ipcMsgBuf.toString('utf8', pos)
+        var devicesList = JSON.parse(strDevicesList)
         this.emit('devicesChanged', devicesList)
         break;
       case SPI_HUB_CMD_MSG_FROM_DEVICE:
         assert(ipcMsgBuf.length >= IPC_DEVICE_MESSAGE_OVERHEAD, 'message from device is too short')
-        const bus     = ipcMsgBuf.readUInt8(pos++)
-        const device  = ipcMsgBuf.readUInt8(pos++)
-        const channel = ipcMsgBuf.readUInt8(pos++)
+        var bus     = ipcMsgBuf.readUInt8(pos++)
+        var device  = ipcMsgBuf.readUInt8(pos++)
+        var channel = ipcMsgBuf.readUInt8(pos++)
         pos += 2 // Throw away the de-dupe ID
-        let message = undefined;
+        var message = undefined;
         if(this._binary) {
           message = allocBuffer(ipcMsgBuf.length - pos)
           ipcMsgBuf.copy(message, 0, pos)
         } else {
           message = ipcMsgBuf.toString('utf8', pos)
         }
-        this.emit('message', { bus, device, channel, message });
+        this.emit('message', { bus: bus, device: device, channel: channel, message: message });
         break;
       default:
-        throw new Error(`unexpected IPC message ID: ${cmd}`)
+        throw new Error('unexpected IPC message ID: ' + cmd)
     }
   } catch (err) {
-    console.error(`spi-hub-client could not process an incoming IPC message:`, err.stack);
+    console.error('spi-hub-client could not process an incoming IPC message:', err.stack);
   }
 }
 
@@ -125,22 +125,22 @@ function validateUInt(val, fieldName, maxValue) {
     return 0;
   }
   if(!_.isInteger(val)) {
-    console.log(`warning: ${fieldName} must be an integer`)
+    console.log('warning: ' + fieldName +  ' must be an integer')
     return 0
   }
   if(val < 0) {
-    console.log(`warning: ${fieldName} must be at least 0`)
+    console.log('warning: ' + fieldName +  ' must be at least 0')
     return 0
   }
   if(val > maxValue) {
-    console.log(`warning: ${fieldName} must be less than or equal to ${maxValue}`)
+    console.log('warning: ' + fieldName + ' must be less than or equal to ' + maxValue)
     return 0
   }
   return val
 }
 
 function allocBuffer(len) {
-  const buf = isNode6 ? Buffer.alloc(len) : new Buffer(len)
+  var buf = isNode6 ? Buffer.alloc(len) : new Buffer(len)
   if(!isNode6) buf.fill(0)
   return buf
 }
