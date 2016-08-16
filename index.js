@@ -30,7 +30,8 @@ function SPIHubClient(options) {
   options = options || {}
   this._binary = !!options.binary
   this._ipcClient = new ipc.MessageClient(SPI_HUB_SOCKET_PATH, { binary: true })
-  this._ipcClient.on('message', message => this._onIPCMessage(message))
+  var self = this
+  this._ipcClient.on('message', function(message) { self._onIPCMessage(message) })
   this._ipcClient.start()
 }
 
