@@ -1,6 +1,6 @@
 {
   "name": "spi-hub-client",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "node.js client for SPI bus communications using spi-hub",
   "main": "index.js",
   "scripts": {
