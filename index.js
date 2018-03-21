@@ -32,6 +32,7 @@ function SPIHubClient(options) {
   this._ipcClient = new ipc.MessageClient(SPI_HUB_SOCKET_PATH, { binary: true })
   var self = this
   this._ipcClient.on('message', function(message) { self._onIPCMessage(message) })
+  this._ipcClient.on('error', function(err) { self.emit('error', new Error('SPIHubClient socket error: ' + (err.stack || err))) })
   this._ipcClient.start()
 }
 
