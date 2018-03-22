@@ -86,9 +86,9 @@ SPIHubClient.prototype._onIPCMessage = function(event) {
     assert(version === IPC_PROTO_VERSION, 'unexpected protocol version: ' + version)
     switch(cmd) {
       case SPI_HUB_CMD_DEVICES_LIST:
-        var strDevicesList = ipcMsgBuf.toString('utf8', pos)
-        var devicesList = JSON.parse(strDevicesList)
-        this.emit('devicesChanged', devicesList)
+        var strMessage = ipcMsgBuf.toString('utf8', pos)
+        const {devices, deviceId, accessCode} = JSON.parse(strMessage)
+        this.emit('devicesChanged', {devices, deviceId, accessCode})
         break;
       case SPI_HUB_CMD_MSG_FROM_DEVICE:
         assert(ipcMsgBuf.length >= IPC_DEVICE_MESSAGE_OVERHEAD, 'message from device is too short')
