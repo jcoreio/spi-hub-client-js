@@ -33,10 +33,13 @@ function SPIHubClient(options) {
   var self = this
   this._ipcClient.on('message', function(message) { self._onIPCMessage(message) })
   this._ipcClient.on('error', function(err) { self.emit('error', new Error('SPIHubClient socket error: ' + (err.stack || err))) })
-  this._ipcClient.start()
 }
 
 util.inherits(SPIHubClient, EventEmitter)
+
+SPIHubClient.prototype.start = function start() {
+  this._ipcClient.start()
+}
 
 SPIHubClient.prototype.send = function send(opts) {
   if(opts == undefined) throw new Error('message must be provided')
