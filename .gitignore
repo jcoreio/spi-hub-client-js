@@ -1,4 +1,9 @@
-
+coverage
 .idea
+.nyc_output
 index.js
+index.js.flow
 **/node_modules
+lib
+es
+.eslintcache
