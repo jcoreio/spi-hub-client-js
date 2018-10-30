@@ -44,7 +44,7 @@ export type MessageFromSPI = {
   messageBuffer?: Buffer,
 }
 
-type SPIDetectedDevice = {
+export type SPIDetectedDevice = {
   busId: number,
   deviceId: number,
   deviceInfo: {
@@ -53,15 +53,15 @@ type SPIDetectedDevice = {
   },
 }
 
-type DevicesChangedMessage = {
+export type SPIDevicesChangedEvent = {
   devices: Array<SPIDetectedDevice>,
   serialNumber: string,
   accessCode: string,
 }
 
-type SPIHubClientEmittedEvents = {
+export type SPIHubClientEmittedEvents = {
   message: [MessageFromSPI],
-  devicesChanged: [DevicesChangedMessage],
+  devicesChanged: [SPIDevicesChangedEvent],
   error: [Error],
 }
 
