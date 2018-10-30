@@ -2,7 +2,19 @@
   "name": "spi-hub-client",
   "version": "3.0.0",
   "description": "node.js client for SPI bus communications using spi-hub",
+  "engines": {
+    "node": ">=8.0.0"
+  },
   "main": "index.js",
+  "module": "es/index.js",
+  "modules.root": "es",
+  "sideEffects": false,
+  "files": [
+    "es/",
+    "index.js",
+    "README.md",
+    "yarn.lock"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -20,7 +32,9 @@
   },
   "homepage": "https://github.com/jcoreio/spi-hub-client-js#readme",
   "dependencies": {
+    "@jcoreio/typed-event-emitter": "^1.0.0",
     "lodash": "^4.12.0",
-    "socket-ipc": "^1.0.0"
+    "socket-ipc": "^1.0.0",
+    "verror": "^1.10.0"
   }
 }
