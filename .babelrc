@@ -25,15 +25,6 @@
         "transform-runtime",
         "istanbul"
       ]
-    },
-    "es5": {
-      "presets": [
-        ["env", {"forceAllTransforms": true}],
-        "stage-1", "flow"
-      ],
-      "plugins": [
-        "transform-runtime"
-      ]
-    },
+    }
   }
 }

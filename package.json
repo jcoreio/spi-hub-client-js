@@ -10,7 +10,6 @@
   "modules.root": "es",
   "sideEffects": false,
   "files": [
-    "es/",
     "index.js",
     "index.flow.js",
     "README.md",
@@ -24,7 +23,7 @@
     "flow:coverage": "for file in src/**.js test/**.js; do echo $file; flow coverage $file; done",
     "flow:watch": "flow-watch -e js,js.flow,flowconfig --ignore es/ --ignore node_modules/ --watch .flowconfig --watch src/ --watch test/",
     "clean": "rimraf es lib $(cd src; ls) *.js.flow",
-    "build": "yarn run clean && babel src --out-dir es && flow-copy-source -v src/ es && BABEL_ENV=es5 babel src --out-dir . && flow-copy-source -v src/ .",
+    "build": "yarn run clean && babel src --out-dir . && flow-copy-source -v src/ .",
     "test": "NODE_ENV=production BABEL_ENV=es5 mocha $npm_package_config_mocha && NODE_ENV=production BABEL_ENV=coverage nyc --reporter=lcov --reporter=text mocha $npm_package_config_mocha",
     "test:watch": "NODE_ENV=production BABEL_ENV=test mocha --watch $npm_package_config_mocha",
     "codecov": "nyc report --reporter=text-lcov > coverage.lcov; codecov",
