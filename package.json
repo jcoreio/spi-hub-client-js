@@ -52,7 +52,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jcoreio/spi-hub-client-js.git"
+    "url": "https://github.com/jcoreio/spi-hub-client-js.git"
   },
   "keywords": [
     "SPI"
@@ -98,7 +98,7 @@
     "mocha": "^4.1.0",
     "nyc": "^11.4.1",
     "rimraf": "^2.6.0",
-    "semantic-release": "^15.1.4"
+    "semantic-release": "^15.10.6"
   },
   "dependencies": {
     "@jcoreio/typed-event-emitter": "^1.0.0",
