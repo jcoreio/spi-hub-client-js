@@ -4,6 +4,8 @@ jobs:
     docker:
       - image: circleci/node:latest
 
+    working_directory: ~/repo
+
     steps:
       - checkout
       - restore_cache:
@@ -15,7 +17,7 @@ jobs:
       - run: yarn config set registry "https://registry.npmjs.org/"
       - run: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/repo/.npmrc
       - run: echo "registry=https://registry.npmjs.org/" >> ~/repo/.npmrc
-      
+
       - run:
           name: yarn install
           command: yarn --ignore-scripts
