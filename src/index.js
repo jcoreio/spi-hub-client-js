@@ -11,7 +11,7 @@ const log = logger('spi-hub-client')
 
 const SPI_HUB_SOCKET_PATH = '/tmp/socket-spi-hub'
 
-const IPC_PROTO_VERSION = 1
+const IPC_PROTO_VERSION = 2
 
 // Commands that are valid both on the SPI bus and on the IPC socket
 const SPI_HUB_CMD_MSG_TO_DEVICE = 1
@@ -19,7 +19,12 @@ const SPI_HUB_CMD_MSG_FROM_DEVICE = 2
 // Commands that are only valid on the IPC socket
 const SPI_HUB_CMD_DEVICES_LIST = 100
 
-const IPC_DEVICE_MESSAGE_OVERHEAD = 7
+const IPC_MESSAGE_FROM_DEVICE_OVERHEAD = 7
+
+const IPC_MESSAGES_TO_DEVICE_OVERHEAD = 4 // Overhead at the beginning = proto version + message type + 2 byte length
+const IPC_OVERHEAD_PER_MESSAGE_TO_DEVICE = 8 // Overhead per message
+
+const IPC_MESSAGE_TO_DEVICE_PREAMBLE = 0xA3
 
 export const SPI_HUB_EVENT_MESSAGE = 'message'
 export const SPI_HUB_EVENT_DEVICES_CHANGED = 'devicesChanged'
@@ -65,6 +70,11 @@ export type SPIHubClientEmittedEvents = {
   error: [Error],
 }
 
+type MessageToSPIState = {
+  txMessage: MessageToSPI,
+  payload: Buffer,
+}
+
 export default class SPIHubClient extends EventEmitter<SPIHubClientEmittedEvents> {
 
   _binary: boolean
@@ -82,27 +92,52 @@ export default class SPIHubClient extends EventEmitter<SPIHubClientEmittedEvents
     this._ipcClient.start()
   }
 
-  send(txMessage: MessageToSPI) {
-    assert(txMessage)
-    const {busId, deviceId, channel, deDupeId, message} = txMessage
-    const deDupeIdFinal = deDupeId || 0
-    validateUInt8(busId, 'busId')
-    validateUInt8(deviceId, 'deviceId')
-    validateUInt8(channel, 'channel')
-    validateUInt16(deDupeIdFinal, 'deDupeId')
+  send(txMessages: Array<MessageToSPI> | MessageToSPI) {
+    assert(txMessages)
+    const txMessagesArr: Array<MessageToSPI> = Array.isArray(txMessages) ? txMessages : [txMessages]
 
-    const msgPayloadBuffer: Buffer = typeof message === 'string' ? Buffer.from(message) : message
-    assert(Buffer.isBuffer(msgPayloadBuffer))
-    const ipcMsgBuf = Buffer.alloc(msgPayloadBuffer.length + IPC_DEVICE_MESSAGE_OVERHEAD)
+    // Encode payloads to binary buffers
+    const messageStates: Array<MessageToSPIState> = txMessagesArr.map((txMessage: MessageToSPI) => {
+      const {message} = txMessage
+      return {
+        txMessage,
+        payload: typeof message === 'string' ? Buffer.from(message) : message
+      }
+    })
+
+    // Calculate required size and allocate buffer
+    const messagesLenTotal = messageStates.reduce((sum: number, entry: MessageToSPIState) =>
+      sum + IPC_OVERHEAD_PER_MESSAGE_TO_DEVICE + entry.payload.length, 0)
+    const ipcMsgBuf = Buffer.alloc(IPC_MESSAGES_TO_DEVICE_OVERHEAD + messagesLenTotal)
+
+    // Write IPC message preamble
     let pos = 0
     ipcMsgBuf.writeUInt8(IPC_PROTO_VERSION, pos++)
     ipcMsgBuf.writeUInt8(SPI_HUB_CMD_MSG_TO_DEVICE, pos++)
-    ipcMsgBuf.writeUInt8(busId, pos++)
-    ipcMsgBuf.writeUInt8(deviceId, pos++)
-    ipcMsgBuf.writeUInt8(channel, pos++)
-    ipcMsgBuf.writeUInt16LE(deDupeIdFinal, pos)
+    ipcMsgBuf.writeUInt16LE(messageStates.length, pos)
     pos += 2
-    msgPayloadBuffer.copy(ipcMsgBuf, pos)
+
+    // Write messages to IPC message buffer
+    for (const messageState: MessageToSPIState of messageStates) {
+      const {txMessage: {busId, deviceId, channel, deDupeId}, payload} = messageState
+      const deDupeIdFinal = deDupeId || 0
+      validateUInt8(busId, 'busId')
+      validateUInt8(deviceId, 'deviceId')
+      validateUInt8(channel, 'channel')
+      validateUInt16(deDupeIdFinal, 'deDupeId')
+
+      ipcMsgBuf.writeUInt8(IPC_MESSAGE_TO_DEVICE_PREAMBLE, pos++)
+      ipcMsgBuf.writeUInt8(busId, pos++)
+      ipcMsgBuf.writeUInt8(deviceId, pos++)
+      ipcMsgBuf.writeUInt8(channel, pos++)
+      ipcMsgBuf.writeUInt16LE(deDupeIdFinal, pos)
+      pos += 2
+      ipcMsgBuf.writeUInt16LE(payload.length, pos)
+      pos += 2
+      payload.copy(ipcMsgBuf, pos)
+      pos += payload.length
+    }
+    // Send the IPC message
     this._ipcClient.send(ipcMsgBuf)
   }
 
@@ -121,7 +156,7 @@ export default class SPIHubClient extends EventEmitter<SPIHubClientEmittedEvents
         this.emit(SPI_HUB_EVENT_DEVICES_CHANGED, {devices, serialNumber, accessCode})
       } break
       case SPI_HUB_CMD_MSG_FROM_DEVICE: {
-        assert(ipcMsgBuf.length >= IPC_DEVICE_MESSAGE_OVERHEAD, 'message from device is too short')
+        assert(ipcMsgBuf.length >= IPC_MESSAGE_FROM_DEVICE_OVERHEAD, 'message from device is too short')
         const busId = ipcMsgBuf.readUInt8(pos++)
         const deviceId = ipcMsgBuf.readUInt8(pos++)
         const channel = ipcMsgBuf.readUInt8(pos++)
